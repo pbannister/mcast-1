@@ -232,7 +232,7 @@ bool test_1(socket_mcast_s& sock_out) {
 
 		printf("Sending reply...\n");
 		sprintf(buffer2, "ACK: %s\n", buffer1);
-		if (!sock_out.send_to(sa, buffer2, std::strlen(buffer2))) {
+		if (!sock_out.send_to(sa, buffer2, 1+std::strlen(buffer2))) {
 			printf("ERROR: sendto() returns error: %s\n", sock_out.error_as_string());
 			return false;
 		}
@@ -251,7 +251,7 @@ bool test_2(socket_mcast_s& sock_out) {
 
 		printf("Sending message...\n");
 		sprintf(buffer1, "HELO to whomever #%d\n", ++id_message);
-		if (!sock_out.send_mcast(buffer1, std::strlen(buffer1))) {
+		if (!sock_out.send_mcast(buffer1, 1+std::strlen(buffer1))) {
 			printf("ERROR: sendto() returns error: %s\n", sock_out.error_as_string());
 			print_endpoint(sock_out.sa_mcast);
 			return false;
@@ -279,7 +279,7 @@ bool test_3(socket_mcast_s& sock_out) {
 
 	printf("Sending initial message...\n");
 	sprintf(buffer1, "HELO to whomever #%d\n", ++id_message);
-	if (!sock_out.send_mcast(buffer1, std::strlen(buffer1))) {
+	if (!sock_out.send_mcast(buffer1, 1+std::strlen(buffer1))) {
 		printf("ERROR: sendto() returns error: %s\n", sock_out.error_as_string());
 		return false;
 	}
@@ -299,7 +299,7 @@ bool test_3(socket_mcast_s& sock_out) {
 
 		printf("Sending message to initial from...\n");
 		sprintf(buffer1, "HELO to whomever #%d\n", ++id_message);
-		if (!sock_out.send_to(sa_from, buffer1, std::strlen(buffer1))) {
+		if (!sock_out.send_to(sa_from, buffer1, 1+std::strlen(buffer1))) {
 			printf("ERROR: sendto() returns error: %s\n", sock_out.error_as_string());
 			return false;
 		}

@@ -50,16 +50,16 @@ bool parse_endpoint(const char* s_endpoint, sockaddr_in& sa) {
 	return parse_address(s_address, sa.sin_addr);
 }
 
-void print_address(const in_addr& a) {
-	printf("Address : %15s\n", ::inet_ntoa(a));
+void print_address(const in_addr& a, const char* name) {
+	printf("%20s %5s - address %s\n", ::inet_ntoa(a), "", name);
 }
 
-void print_endpoint(const sockaddr_in& sa) {
-	printf("Endpoint : %15s:%u\n", ::inet_ntoa(sa.sin_addr), ntohs(sa.sin_port));
+void print_endpoint(const sockaddr_in& sa, const char* name) {
+	printf("%20s:%-5u - endpoint %s\n", ::inet_ntoa(sa.sin_addr), ntohs(sa.sin_port), name);
 }
 
 //
-//
+//	Base class for INET sockets.
 //
 
 class socket_in_base_s {
@@ -119,6 +119,10 @@ public:
 	}
 };
 
+//
+//	Base class for DGRAM sockets.
+//
+
 class socket_dgram_s : public socket_in_base_s {
 public:
 	bool socket_open() {
@@ -127,6 +131,10 @@ public:
 		return (0 <= sock);
 	}
 };
+
+//
+//	Base class for multicast sockets.
+//
 
 class socket_mcast_s : public socket_dgram_s {
 public:
@@ -228,9 +236,11 @@ bool test_1(socket_mcast_s& sock_out) {
 			printf("ERROR: recvfrom() returns error: %s\n", sock_out.error_as_string());
 			return false;
 		}
+		print_endpoint(sa, "read");
 		printf("Received: %s\n", buffer1);
 
 		printf("Sending reply...\n");
+		print_endpoint(sa, "write");
 		sprintf(buffer2, "ACK: %s\n", buffer1);
 		if (!sock_out.send_to(sa, buffer2, 1+std::strlen(buffer2))) {
 			printf("ERROR: sendto() returns error: %s\n", sock_out.error_as_string());
@@ -250,10 +260,10 @@ bool test_2(socket_mcast_s& sock_out) {
 	for (;;) {
 
 		printf("Sending message...\n");
+		print_endpoint(sock_out.sa_mcast, "write");
 		sprintf(buffer1, "HELO to whomever #%d\n", ++id_message);
 		if (!sock_out.send_mcast(buffer1, 1+std::strlen(buffer1))) {
 			printf("ERROR: sendto() returns error: %s\n", sock_out.error_as_string());
-			print_endpoint(sock_out.sa_mcast);
 			return false;
 		}
 		printf("Sent: %s\n", buffer1);
@@ -265,6 +275,7 @@ bool test_2(socket_mcast_s& sock_out) {
 			printf("ERROR: recvfrom() returns error: %s\n", sock_out.error_as_string());
 			return false;
 		}
+		print_endpoint(sa, "read");
 		printf("Received: %s\n", buffer2);
 
 	}
@@ -278,6 +289,7 @@ bool test_3(socket_mcast_s& sock_out) {
 	int id_message = 0;
 
 	printf("Sending initial message...\n");
+	print_endpoint(sock_out.sa_mcast, "write");
 	sprintf(buffer1, "HELO to whomever #%d\n", ++id_message);
 	if (!sock_out.send_mcast(buffer1, 1+std::strlen(buffer1))) {
 		printf("ERROR: sendto() returns error: %s\n", sock_out.error_as_string());
@@ -292,12 +304,14 @@ bool test_3(socket_mcast_s& sock_out) {
 		printf("ERROR: recvfrom() returns error: %s\n", sock_out.error_as_string());
 		return false;
 	}
+	print_endpoint(sa_from, "read");
 	printf("Received: %s\n", buffer2);
 	printf("Will reply to sender, only.\n");
 
 	for (;;) {
 
 		printf("Sending message to initial from...\n");
+		print_endpoint(sa_from, "write");
 		sprintf(buffer1, "HELO to whomever #%d\n", ++id_message);
 		if (!sock_out.send_to(sa_from, buffer1, 1+std::strlen(buffer1))) {
 			printf("ERROR: sendto() returns error: %s\n", sock_out.error_as_string());
@@ -312,10 +326,15 @@ bool test_3(socket_mcast_s& sock_out) {
 			printf("ERROR: recvfrom() returns error: %s\n", sock_out.error_as_string());
 			return false;
 		}
+		print_endpoint(sa, "read");
 		printf("Received: %s\n", buffer2);
 
 	}
 	return true;
+}
+
+void print_error(socket_in_base_s& o, const char* name) {
+	printf("ERROR: %s - error(%d): %s\n", name, o.error, o.error_as_string());
 }
 
 bool test_mc() {
@@ -330,12 +349,12 @@ bool test_mc() {
 			printf("ERROR: Cannot parse bind endpoint.\n");
 			return false;
 		}
-		print_endpoint(sa);
+		print_endpoint(sa, "bind");
 		if (!sock_out.bind_to(sa)) {
-			printf("ERROR: binding socket to endpoint: %s  error(%d): %s\n", g_options.s_endpoint_bind, sock_out.error, sock_out.error_as_string());
+			print_error(sock_out, "binding socket to endpoint");
 			return false;
 		}
-		printf("OK bind() to: %s\n", g_options.s_endpoint_bind);
+		printf("OK bind\n");
 	}
 	if (*g_options.s_endpoint_connect) {
 		sockaddr_in sa = {0};
@@ -343,26 +362,26 @@ bool test_mc() {
 			printf("ERROR: Cannot parse connect endpoint.\n");
 			return false;
 		}
-		print_endpoint(sa);
+		print_endpoint(sa, "connect");
 		if (!sock_out.connect_to(sa)) {
-			printf("ERROR: connecting socket to endpoint: %s  error(%d): %s\n", g_options.s_endpoint_connect, sock_out.error, sock_out.error_as_string());
+			print_error(sock_out, "connecting socket to endpoint");
 			return false;
 		}
-		printf("OK bind() to: %s\n", g_options.s_endpoint_bind);
+		printf("OK connect\n");
 	}
 	if (*g_options.s_endpoint_send) {
 		if (!parse_endpoint(g_options.s_endpoint_send, sock_out.sa_mcast)) {
 			printf("ERROR: Cannot parse send endpoint.\n");
 			return false;
 		}
-		print_endpoint(sock_out.sa_mcast);
-		printf("OK will sendto() to: %s\n", g_options.s_endpoint_send);
+		print_endpoint(sock_out.sa_mcast, "mcast");
+		printf("OK destination\n");
 	}
 	{
 		in_addr interface_mcast = {0};
 		if (sock_out.interface_get(interface_mcast)) {
 			printf("Mcast interface is already set.\n");
-			print_address(interface_mcast);
+			print_address(interface_mcast, "mcast interface");
 		} else {
 			printf("Mcast interface not yet set.\n");
 		}
@@ -371,13 +390,18 @@ bool test_mc() {
 				printf("ERROR: Cannot parse interface.\n");
 				return false;
 			}
-			print_address(interface_mcast);
+			print_address(interface_mcast, "mcast interface");
 			if (!sock_out.interface_set(interface_mcast)) {
-				printf("ERROR: Cannot set mcast interface address: %s  error(%d): %s.\n", g_options.s_mcast_interface, sock_out.error, sock_out.error_as_string());
-//				print_address(interface_mcast);
+				print_error(sock_out, "cannot set mcast interface address");
 				return false;
 			}
-			printf("OK set interface as mcast: %s\n", g_options.s_mcast_interface);
+			printf("OK set interface as mcast\n");
+			// Verify the interface is what we just set.
+			if (sock_out.interface_get(interface_mcast)) {
+				print_address(interface_mcast, "mcast interface (as set)");
+			} else {
+				printf("Mcast interface not set??\n");
+			}
 		}
 		if (*g_options.s_mcast_membership) {
 			in_addr address_mcast = {0};
@@ -385,13 +409,13 @@ bool test_mc() {
 				printf("ERROR: Cannot parse mcast membership address.\n");
 				return false;
 			}
-			print_address(address_mcast);
+			print_address(interface_mcast, "mcast interface");
+			print_address(address_mcast, "mcast membership");
 			if (!sock_out.membership_add(interface_mcast, address_mcast)) {
-				printf("ERROR: Cannot set mcast interface membership: %s  error(%d): %s\n", g_options.s_mcast_membership, sock_out.error, sock_out.error_as_string());
-//				print_address(interface_mcast);
+				print_error(sock_out, "cannot set mcast interface membership");
 				return false;
 			}
-			printf("OK added mcast membership: %s to interface: %s\n", g_options.s_mcast_membership, g_options.s_mcast_interface);
+			printf("OK added mcast membership to interface\n");
 		}
 	}
 

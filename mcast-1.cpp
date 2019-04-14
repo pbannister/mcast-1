@@ -214,13 +214,15 @@ struct options_s {
 	const char* s_mcast_interface;
 	const char* s_mcast_membership;
 	int which;
+	int dt_client;
 } g_options = {
 	"",
 	"",
 	"",
 	"",
 	"",
-	0
+	0,
+	1
 };
 
 bool test_1(socket_mcast_s& sock_out) {
@@ -278,6 +280,7 @@ bool test_2(socket_mcast_s& sock_out) {
 		print_endpoint(sa, "read");
 		printf("Received: %s\n", buffer2);
 
+		sleep(g_options.dt_client);
 	}
 	return true;
 }
@@ -442,6 +445,7 @@ void usage(const char* av0) {
 		"\t-d endpoint      send to endpoint  : %s\n"
 		"\t-i address       mcast interface   : %s\n"
 		"\t-m address       mcast membership  : %s\n"
+		"\t-t seconds       client sleep      : %d\n"
 		"\t-1               test 1\n"
 		"\t-2               test 2\n"
 		"\t-3               test 3\n"
@@ -450,14 +454,15 @@ void usage(const char* av0) {
 		g_options.s_endpoint_bind,
 		g_options.s_endpoint_send,
 		g_options.s_mcast_interface,
-		g_options.s_mcast_membership
+		g_options.s_mcast_membership,
+		g_options.dt_client
 	);
 	exit(1);
 }
 
 void options_read(int ac, char** av) {
 	for (;;) {
-		int c = ::getopt(ac, av, "b:d:i:m:123h");
+		int c = ::getopt(ac, av, "b:d:i:m:t:123h");
 		if (c < 0) break;
 		switch (c) {
 		case 'b':
@@ -471,6 +476,9 @@ void options_read(int ac, char** av) {
 			break;
 		case 'm':
 			g_options.s_mcast_membership = optarg;
+			break;
+		case 't':
+			g_options.dt_client = atoi(optarg);
 			break;
 		case '1':
 			g_options.which = 1;

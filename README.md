@@ -131,7 +131,7 @@ Without a firewall, this example should just work.
 With a firewall, in my case, it did not. 
 Needed to diagnose the firewall induced problems, at this point.
 
-## Centos 7 firewalld specific guidance.
+## Centos 7 *firewalld* specific guidance.
 
 In my specific present case, the Centos 7 *firewalld* was the source of grief.
 Of certain, I do not claim to do be an expert on *firewalld* or intended function.

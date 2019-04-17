@@ -138,10 +138,12 @@ Of certain, I do not claim to do be an expert on *firewalld* or intended functio
 What I can do is describe what worked for my problem.
 
 To get multicast working, I needed to tell *firewalld*:
-<pre>sudo firewall-cmd --permanent --add-protocol igmp</pre>
-<pre>sudo firewall-cmd --permanent --add-port 12345/udp</pre>
-<pre>sudo firewall-cmd --permanent --add-source-port 12345/udp</pre>
-<pre>sudo firewall-cmd --reload</pre>
+<pre>
+firewall-cmd --permanent --add-protocol igmp
+firewall-cmd --permanent --add-port 12345/udp
+firewall-cmd --permanent --add-source-port 12345/udp
+firewall-cmd --reload
+</pre>
 
 This worked for me. 
 Clarification welcomed.

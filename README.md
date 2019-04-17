@@ -52,7 +52,7 @@ Sometimes your system will automatically pick and configure the right network in
 But ... if not explicitly specified, sometimes your system will *not* pick the right interface.
 This can prove ... *very* confusing.
  
-## Test #2 - client-like usage with ordinary UDP.
+### Test #3 - client-like usage with ordinary UDP.
 From 192.168.86.20:
 <pre>
 bin/mcast-1 -d 192.168.86.20:12345 -2

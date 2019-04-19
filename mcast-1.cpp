@@ -453,14 +453,14 @@ void usage(const char* av0) {
 	printf(
 		"\nUsage:\n\t%s [ options ]\n"
 		"\nWhere options are:\n"
-		"\t-b endpoint      bind to endpoint  : %s\n"
-		"\t-d endpoint      send to endpoint  : %s\n"
-		"\t-i address       mcast interface   : %s\n"
-		"\t-m address       mcast membership  : %s\n"
-		"\t-t seconds       client sleep      : %d\n"
-		"\t-1               test 1\n"
-		"\t-2               test 2\n"
-		"\t-3               test 3\n"
+		"\t-b endpoint         bind to endpoint  : %s\n"
+		"\t-d endpoint         send to endpoint  : %s\n"
+		"\t-i address          mcast interface   : %s\n"
+		"\t-m mcast@interface  mcast membership  : %s\n"
+		"\t-t seconds          client sleep      : %d\n"
+		"\t-1                  test 1\n"
+		"\t-2                  test 2\n"
+		"\t-3                  test 3\n"
 		"\n",
 		av0,
 		g_options.s_endpoint_bind,

@@ -18,14 +18,11 @@ Where options are:
 	-m address       mcast membership  : 
 	-1               test 1
 	-2               test 2
-	-3               test 3
 </pre>
 
-## Test #1 - server-like usage with multicast.
+### Test #1 - server-like usage with multicast.
 From 192.168.86.248:
-<pre>
-bin/mcast-1 -b 0:12345 -i 192.168.86.248 -m 234.1.2.3 -1
-</pre>
+<pre>bin/mcast-1 -b 0:12345 -i 192.168.86.248 -m 234.1.2.3 -1</pre>
 
 This test:
 *  Binds the socket to the endpoint 0:12345.
@@ -33,27 +30,29 @@ This test:
 *  For the interface adds multicast membership to the group 234.1.2.3.
 *  Receives (from any sender) and replies to caller.
 
-## Test #1 - server-like usage with ordinary UDP.
+### Test #1 - server-like usage with ordinary UDP.
 From 192.168.86.248:
-<pre>
-bin/mcast-1 -b 192.168.86.248:12345 -1
-</pre>
+<pre>bin/mcast-1 -b 192.168.86.248:12345 -1</pre>
 
 This test:
 *  Binds the socket to the endpoint 192.168.86.248:12345.
 *  Receives (from any sender) and replies to caller.
 
-## Test #2 - client-like usage with multicast.
+### Test #2 - client-like usage with multicast.
 From 192.168.86.20:
-<pre>
-bin/mcast-1 -d 234.1.2.3:12345 -2
-</pre>
+<pre>bin/mcast-1 -d 234.1.2.3:12345 -i 192.168.86.20 -2</pre>
 
 This test:
 *  Specifies the destination (a multicast address).
 *  Sends to the destination, and receives any reply.
+
+Note that specifying the multicast interface (the "-i" option) is not always needed. 
+Sometimes your system will automatically pick and configure the right network interface.
+
+But ... if not explicitly specified, sometimes your system will *not* pick the right interface.
+This can prove ... *very* confusing.
  
-## Test #2 - client-like usage with ordinary UDP.
+### Test #3 - client-like usage with ordinary UDP.
 From 192.168.86.20:
 <pre>
 bin/mcast-1 -d 192.168.86.20:12345 -2
@@ -62,3 +61,89 @@ bin/mcast-1 -d 192.168.86.20:12345 -2
 This test:
 *  Specifies the destination (a unicast address).
 *  Sends to the destination, and receives any reply.
+
+## Use-cases
+
+My primary use-case in creating this tool was to diagnose use of multicast.
+This tool is also useful in discovering firewall-induced problems.
+(In my case the default Centos 7 firewall was the source of grief.)
+
+Note that if you are well-acquainted with TCP client/server network usage
+(as am I *very* acquainted)
+the world of UDP is a bit wild and wooly. 
+There is scarce reason to follow the same patterns.
+You can use (and mis-use) UDP in very different pattern.
+So I have place "client" and "server" in quotes, to remind this is not a fixed pattern.
+
+### 1) Verify ordinary unicast UDP.
+
+Given two computers at (for example) addresses 192.168.86.20 (the "service" side),
+and address 192.168.86.248 (the "client" side), a test we can perform:
+
+First, start the "server" on 192.168.86.20 port 12345:
+<pre>bin/mcast-1 -b 192.168.86.20:12345 -1</pre>
+
+Then start the "client" on 192.168.86.248:
+<pre>bin/mcast-1 -d 192.168.86.20:12345 -2</pre>
+
+Assuming no firewalls, and a proper network routes between the two systems, this will just work.
+If this does not work, completely disable any firewalls, and reboot. 
+
+(**Never** do this when connected directly to the internet.)
+
+If this test does not work, you have generic network issues to resolve.
+
+If this test fails with your firewall, and works without, then you have firewall issues.
+
+### 2) Verify client unicast to a multicast service.
+
+Assuming you have done the prior unicast test, with success, then try multicast.
+Well not *exactly*. 
+We can cheat a bit.
+Try a "server" configured for multicast, but use a unicast client:
+
+Start a proper multicast receiving "service" side on 192.168.86.20 with:
+<pre>bin/mcast-1 -b 0:12345 -i 192.168.86.20 -m 234.1.2.3 -1</pre>
+
+Where a "client" sending to 234.1.2.3:12345 is expected to be received by *all* the services listening on the multicast address 234.1.2.3:12345. 
+
+But in this test, to be sure the service side is properly configured for multicast, we use a unicast client.
+<pre>bin/mcast-1 -d 192.168.86.20:12345 -2</pre>
+
+This step should just work. If not then you missed something prior.
+If this step works, you are ready to debug any client multicast issues.
+(Expect to encounter and debug some of your firewall issues at this point.)
+
+### 3) Verify client multicast to a multicast service.
+
+This is, of course, where we were aiming from the start. :)
+
+With the "service" from prior exercise, start a proper multicast client with:
+<pre>bin/mcast-1 -d 234.1.2.3:12345 -i 192.168.86.248 -2</pre>
+
+Note that you can leave out explicitly specifying the multcast interface (the "-i" option).
+Sometimes you system will pick the right interface. Sometimes not. This can be confusing.
+
+Always explicitly specify the correct multicast interface.
+At the code level, this is logically <pre>setsockopt(,IP_MULTICAST_IF,"192.168.86.248")</pre> in the example.
+
+Without a firewall, this example should just work.
+With a firewall, in my case, it did not. 
+Needed to diagnose the firewall induced problems, at this point.
+
+## Centos 7 *firewalld* specific guidance.
+
+In my specific present case, the Centos 7 *firewalld* was the source of grief.
+Of certain, I do not claim to do be an expert on *firewalld* or intended function.
+What I can do is describe what worked for my problem.
+
+To get multicast working, I needed to tell *firewalld*:
+<pre>
+firewall-cmd --permanent --add-protocol igmp
+firewall-cmd --permanent --add-port 12345/udp
+firewall-cmd --permanent --add-source-port 12345/udp
+firewall-cmd --reload
+</pre>
+
+This worked for me. 
+Clarification welcomed.

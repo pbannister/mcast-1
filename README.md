@@ -22,7 +22,7 @@ Where options are:
 
 ### Test #1 - server-like usage with multicast.
 From 192.168.86.248:
-<pre>bin/mcast-1 -b 0:12345 -i 192.168.86.248 -m 234.1.2.3 -1</pre>
+<pre>bin/mcast-1 -b 0:12345 -m 234.1.2.3@192.168.86.248 -1</pre>
 
 This test:
 *  Binds the socket to the endpoint 0:12345.
@@ -103,7 +103,7 @@ We can cheat a bit.
 Try a "server" configured for multicast, but use a unicast client:
 
 Start a proper multicast receiving "service" side on 192.168.86.20 with:
-<pre>bin/mcast-1 -b 0:12345 -i 192.168.86.20 -m 234.1.2.3 -1</pre>
+<pre>bin/mcast-1 -b 0:12345 -m 234.1.2.3@192.168.86.20 -1</pre>
 
 Where a "client" sending to 234.1.2.3:12345 is expected to be received by *all* the services listening on the multicast address 234.1.2.3:12345. 
 

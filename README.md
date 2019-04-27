@@ -30,6 +30,14 @@ This test:
 *  For the interface adds multicast membership to the group 234.1.2.3.
 *  Receives (from any sender) and replies to caller.
 
+Note that in the above setup, the service will receive on port 12345
+multicast and direct UDP messages through <b>any</b> network interface.
+If this is what you want, the above form is sufficient.
+In more complex network setups, you might want to ensure that client messages 
+can only come in through a <i>specific</i> network interface.
+You can specifiy the network interface by changing the socket bind():
+<pre>bin/mcast-1 -b 192.168.86.20:12345 -m 234.1.2.3@192.168.86.248 -1</pre>
+
 ### Test #1 - server-like usage with ordinary UDP.
 From 192.168.86.248:
 <pre>bin/mcast-1 -b 192.168.86.248:12345 -1</pre>
@@ -48,9 +56,11 @@ This test:
 
 Note that specifying the multicast interface (the "-i" option) is not always needed. 
 Sometimes your system will automatically pick and configure the right network interface.
+Sometimes you may have another application that has enabled multicast on the needed network interface.
 
-But ... if not explicitly specified, sometimes your system will *not* pick the right interface.
-This can prove ... *very* confusing.
+But ... if not explicitly specified, sometimes the proper interface will *not* enabled for multicast.
+This can prove ... *very* confusing. 
+Better to always explicitly indicate the multicast network interface.
  
 ### Test #3 - client-like usage with ordinary UDP.
 From 192.168.86.20:
@@ -131,6 +141,13 @@ Without a firewall, this example should just work.
 With a firewall, in my case, it did not. 
 Needed to diagnose the firewall induced problems, at this point.
 
+## Diagnostics for the multicast service.
+
+In another window, you monitor something of the Linux networking status specific to multicast with a bit of script:
+<pre>while clear ; do ip maddress show eth1 ; cat /proc/net/igmp ; sleep 2 ; done</pre>
+
+This presumes that <i>eth1</i> is the network interface meant for multicast use.
+
 ## Centos 7 *firewalld* specific guidance.
 
 In my specific present case, the Centos 7 *firewalld* was the source of grief.
@@ -144,6 +161,20 @@ firewall-cmd --permanent --add-port 12345/udp
 firewall-cmd --permanent --add-source-port 12345/udp
 firewall-cmd --reload
 </pre>
+
+The resulting firewalld configuration on my recently installed Centos 7 test system was:
+<pre># cat /etc/firewalld/zones/public.xml
+&lt;?xml version="1.0" encoding="utf-8"?>
+&lt;zone>
+  &lt;short>Public&lt;/short>
+  &lt;description>For use in public areas. You do not trust the other computers on networks to not harm your computer. Only selected incoming connections are accepted.&lt;/description>
+  &lt;service name="ssh"/>
+  &lt;service name="dhcpv6-client"/>
+  &lt;port protocol="udp" port="12349"/>
+  &lt;source-port protocol="udp" port="12349"/>
+&lt;/zone>
+</pre>
+You might want this for other than the "public" zone, in less usual usage.
 
 This worked for me. 
 Clarification welcomed.

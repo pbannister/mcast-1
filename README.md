@@ -141,6 +141,17 @@ Without a firewall, this example should just work.
 With a firewall, in my case, it did not. 
 Needed to diagnose the firewall induced problems, at this point.
 
+## Advanced usage.
+
+You can specify more than one multicast interface (client-like usage) and membership (service-like usage).
+You could listen for multicast messages on different network interfaces and addresses.
+
+For example, to listen on the same multicast address on two different network interfaces:
+<pre>bin/mcast-1 -b 0:12345 -m 234.1.2.3@192.168.86.248 -m 234.1.2.3@10.1.1.248 -1</pre>
+
+To listen on two different multicast addresses on the same network interface:
+<pre>bin/mcast-1 -b 0:12345 -m 234.1.2.3@192.168.86.248 -m 235.6.7.8@192.168.86.248 -1</pre>
+
 ## Diagnostics for the multicast service.
 
 In another window, you monitor something of the Linux networking status specific to multicast with a bit of script:

@@ -62,7 +62,7 @@ void print_endpoint(const sockaddr_in& sa, const char* name) {
 //	Base class for INET sockets.
 //
 
-class socket_in_base_s {
+class socket_inet_base_s {
 protected:
 	int sock;
 	ssize_t actual;
@@ -112,9 +112,9 @@ public:
 		return ::strerror(error);
 	}
 public:
-	socket_in_base_s() : sock(-1), actual(0), error(0) {
+	socket_inet_base_s() : sock(-1), actual(0), error(0) {
 	}
-	virtual ~socket_in_base_s() {
+	virtual ~socket_inet_base_s() {
 		socket_close();
 	}
 };
@@ -123,7 +123,7 @@ public:
 //	Base class for DGRAM sockets.
 //
 
-class socket_dgram_s : public socket_in_base_s {
+class socket_dgram_s : public socket_inet_base_s {
 public:
 	bool socket_open() {
 		sock = ::socket(AF_INET, SOCK_DGRAM, 0);
@@ -336,7 +336,7 @@ bool test_3(socket_mcast_s& sock) {
 	return true;
 }
 
-void print_error(socket_in_base_s& o, const char* name) {
+void print_error(socket_inet_base_s& o, const char* name) {
 	printf("ERROR: %s - error(%d): %s\n", name, o.error, o.error_as_string());
 }
 
@@ -460,7 +460,6 @@ void usage(const char* av0) {
 		"\t-t seconds          client sleep      : %d\n"
 		"\t-1                  test 1\n"
 		"\t-2                  test 2\n"
-		"\t-3                  test 3\n"
 		"\n",
 		av0,
 		g_options.s_endpoint_bind,
@@ -474,7 +473,7 @@ void usage(const char* av0) {
 
 void options_read(int ac, char** av) {
 	for (;;) {
-		int c = ::getopt(ac, av, "b:d:i:m:t:123h");
+		int c = ::getopt(ac, av, "b:d:i:m:t:12h");
 		if (c < 0) break;
 		switch (c) {
 		case 'b':
@@ -497,9 +496,6 @@ void options_read(int ac, char** av) {
 			break;
 		case '2':
 			g_options.which = 2;
-			break;
-		case '3':
-			g_options.which = 3;
 			break;
 		default:
 		case 'h':

@@ -1,6 +1,6 @@
 #
 #
-# 
+#
 
 all : #default rule
 
@@ -12,7 +12,8 @@ SOURCES=mcast-1.cpp
 INCLUDES=\
 nstl/strings.h \
 nstl/arrayopts.h \
-nstl/sockets.h
+nstl/sockets.h \
+nstl/endpoints.h
 
 ${BIN} : ; mkdir -p $@
 
@@ -22,4 +23,3 @@ ${TARGET} : ${BIN} ${SOURCES} ${INCLUDES} Makefile
 all : ${TARGET}
 
 clean : ; -rm -rf ${BIN}/*
-

@@ -1,4 +1,4 @@
-#pragma once 
+#pragma once
 
 //
 //	Free list of strings.
@@ -115,6 +115,9 @@ public:
     }
     char* strchr(int c) {
         return std::strchr(p_node->s_buffer, c);
+    }
+    char* strrchr(int c) {
+        return std::strrchr(p_node->s_buffer, c);
     }
 
 public:
